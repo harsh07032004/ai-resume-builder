@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import ResumeForm from './components/ResumeForm';
 import ResumePreview from './components/ResumePreview';
 import ThemeToggle from './components/ThemeToggle';
-import { FiFileText, FiDownload } from 'react-icons/fi';
+import JobOptimizer from './components/JobOptimizer';
+import { FiFileText, FiDownload, FiTarget } from 'react-icons/fi';
 import axios from 'axios';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('form'); // 'form', 'optimizer', 'preview'
 
   const handleFormChange = (newData) => {
     setFormData(newData);
@@ -83,62 +85,140 @@ function App() {
           <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Section */}
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-            <h2 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Resume Information
-            </h2>
-            <ResumeForm 
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <button
+            onClick={() => setActiveTab('form')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'form'
+                ? darkMode 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-600 text-white'
+                : darkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            <FiFileText />
+            <span>Resume Form</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('optimizer')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'optimizer'
+                ? darkMode 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-600 text-white'
+                : darkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            <FiTarget />
+            <span>Job Optimizer</span>
+          </button>
+          
+          <button
+            onClick={() => { setActiveTab('preview'); handlePreview(); }}
+            disabled={!formData.name || !formData.email}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed ${
+              activeTab === 'preview'
+                ? darkMode 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-blue-600 text-white'
+                : darkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-500' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400'
+            }`}
+          >
+            <FiFileText />
+            <span>Preview</span>
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="grid grid-cols-1 gap-8">
+          {activeTab === 'form' && (
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
+              <h2 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                Resume Information
+              </h2>
+              <ResumeForm 
+                formData={formData} 
+                onChange={handleFormChange}
+                darkMode={darkMode}
+              />
+              
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button
+                  onClick={handlePreview}
+                  disabled={isGenerating || !formData.name || !formData.email}
+                  className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    darkMode 
+                      ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600' 
+                      : 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400'
+                  } text-white disabled:cursor-not-allowed`}
+                >
+                  <FiFileText />
+                  <span>{isGenerating ? 'Generating...' : 'Preview Resume'}</span>
+                </button>
+                
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGenerating || !formData.name || !formData.email}
+                  className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                    darkMode 
+                      ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600' 
+                      : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
+                  } text-white disabled:cursor-not-allowed`}
+                >
+                  <FiDownload />
+                  <span>{isGenerating ? 'Generating...' : 'Download PDF'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'optimizer' && (
+            <JobOptimizer 
               formData={formData} 
               onChange={handleFormChange}
               darkMode={darkMode}
             />
-            
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 mt-8">
-              <button
-                onClick={handlePreview}
-                disabled={isGenerating || !formData.name || !formData.email}
-                className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                  darkMode 
-                    ? 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600' 
-                    : 'bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400'
-                } text-white disabled:cursor-not-allowed`}
-              >
-                <FiFileText />
-                <span>{isGenerating ? 'Generating...' : 'Preview Resume'}</span>
-              </button>
-              
-              <button
-                onClick={handleDownloadPDF}
-                disabled={isGenerating || !formData.name || !formData.email}
-                className={`flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                  darkMode 
-                    ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600' 
-                    : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
-                } text-white disabled:cursor-not-allowed`}
-              >
-                <FiDownload />
-                <span>{isGenerating ? 'Generating...' : 'Download PDF'}</span>
-              </button>
-            </div>
-          </div>
+          )}
 
-          {/* Preview Section */}
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-            <h2 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Preview
-            </h2>
-            {showPreview && previewHtml ? (
-              <ResumePreview html={previewHtml} darkMode={darkMode} />
-            ) : (
-              <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                <FiFileText className="text-6xl mx-auto mb-4 opacity-50" />
-                <p>Click "Preview Resume" to see your resume here</p>
+          {activeTab === 'preview' && (
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Resume Preview
+                </h2>
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGenerating || !formData.name || !formData.email}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    darkMode 
+                      ? 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600' 
+                      : 'bg-green-600 hover:bg-green-700 disabled:bg-gray-400'
+                  } text-white disabled:cursor-not-allowed`}
+                >
+                  <FiDownload />
+                  <span>{isGenerating ? 'Generating...' : 'Download PDF'}</span>
+                </button>
               </div>
-            )}
-          </div>
+              
+              {showPreview && previewHtml ? (
+                <ResumePreview html={previewHtml} darkMode={darkMode} />
+              ) : (
+                <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <FiFileText className="text-6xl mx-auto mb-4 opacity-50" />
+                  <p>Loading preview...</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

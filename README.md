@@ -12,6 +12,12 @@ A full-stack web application that generates professional resumes using AI-enhanc
   - Work experience (multiple entries with AI enhancement option)
   - Projects (title and description with AI enhancement)
   - Skills (comma-separated tags)
+- 🎯 **Job-Tailored Optimization** - NEW FEATURE!
+  - Paste job descriptions to get personalized optimization
+  - AI-powered job analysis (skills, keywords, requirements)
+  - Resume match scoring with detailed breakdown
+  - Specific improvement suggestions for experience and projects
+  - One-click application of selected improvements
 - 👁️ **Live preview** of generated resume
 - 📱 **Mobile-responsive** design
 - ⚡ **AI enhancement toggle** for improving descriptions
@@ -19,6 +25,11 @@ A full-stack web application that generates professional resumes using AI-enhanc
 ### Backend (Flask + Python)
 - 🚀 **RESTful API** with Flask
 - 🤖 **AI text enhancement** using HuggingFace Transformers (T5-small)
+- 🎯 **Job Description Analysis** - NEW!
+  - NLP-powered keyword extraction and skill identification
+  - Industry and seniority level detection
+  - Resume-to-job matching algorithms
+  - Intelligent improvement suggestions
 - 📄 **LaTeX template engine** with Jinja2
 - 🔄 **PDF generation** using pdflatex
 - 🌐 **CORS enabled** for frontend integration
@@ -78,6 +89,8 @@ The frontend will run on `http://localhost:3000`
 
 ## API Endpoints
 
+### Core Resume Endpoints
+
 ### `POST /generate`
 Generates and returns a PDF resume.
 
@@ -129,6 +142,99 @@ Returns HTML preview of the resume.
 }
 ```
 
+### Job Optimization Endpoints - NEW!
+
+### `POST /analyze-job`
+Analyzes a job description to extract requirements and keywords.
+
+**Request Body:**
+```json
+{
+  "job_description": "We are seeking a Senior Software Engineer with 5+ years experience in React, Node.js, and Python..."
+}
+```
+
+**Response:**
+```json
+{
+  "analysis": {
+    "job_level": "Senior",
+    "industry": "Technology",
+    "skills": ["react", "node.js", "python", "javascript"],
+    "keywords": {"engineer": 3, "development": 2, "experience": 4},
+    "requirements": {
+      "education": ["bachelor degree computer science"],
+      "experience": ["5+ years"],
+      "technical": ["react", "node.js", "python"],
+      "soft_skills": ["leadership", "communication"]
+    }
+  }
+}
+```
+
+### `POST /optimize-resume`
+Optimizes resume based on job description analysis.
+
+**Request Body:**
+```json
+{
+  "resume_data": { /* resume data object */ },
+  "job_description": "Job posting text..."
+}
+```
+
+**Response:**
+```json
+{
+  "optimization": {
+    "match_score": {
+      "overall_score": 75.5,
+      "keyword_score": 80.0,
+      "skill_score": 71.0,
+      "matched_skills": ["javascript", "react"],
+      "missing_skills": ["python", "docker"]
+    },
+    "suggestions": {
+      "skills_to_add": ["Python", "Docker", "AWS"],
+      "experience_improvements": [
+        {
+          "index": 0,
+          "original": "Built web apps",
+          "improved": "Developed scalable web applications using React and Node.js"
+        }
+      ],
+      "overall_suggestions": ["Add more relevant technical skills", "Highlight leadership experience"]
+    }
+  }
+}
+```
+
+### `POST /apply-suggestions`
+Applies selected optimization suggestions to resume data.
+
+**Request Body:**
+```json
+{
+  "resume_data": { /* original resume */ },
+  "suggestions": { /* optimization suggestions */ },
+  "selected_improvements": [
+    {
+      "type": "experience",
+      "index": 0,
+      "improved": "Enhanced description..."
+    }
+  ],
+  "add_suggested_skills": true
+}
+```
+
+**Response:**
+```json
+{
+  "optimized_resume": { /* updated resume data */ }
+}
+```
+
 ### `GET /health`
 Health check endpoint.
 
@@ -136,16 +242,28 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "ai_enabled": true
+  "ai_enabled": true,
+  "optimizer_enabled": true
 }
 ```
 
 ## Usage
 
+### Basic Resume Creation
 1. **Fill out the form** with your resume information
 2. **Toggle AI enhancement** if you want improved descriptions
 3. **Click "Preview Resume"** to see how it looks
 4. **Click "Download PDF"** to generate and download your resume
+
+### Job-Tailored Optimization - NEW!
+1. **Switch to the "Job Optimizer" tab**
+2. **Paste a job description** from the job posting you're applying to
+3. **Click "Analyze Job"** to see extracted requirements and keywords
+4. **Click "Optimize Resume"** to get personalized suggestions and match score
+5. **Review suggestions** for experience improvements, missing skills, and keywords
+6. **Select improvements** you want to apply using checkboxes
+7. **Click "Apply Selected Improvements"** to automatically update your resume
+8. **Generate your optimized resume** tailored to the specific job
 
 ## Project Structure
 

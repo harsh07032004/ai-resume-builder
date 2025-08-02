@@ -9,6 +9,7 @@ from datetime import datetime
 import uuid
 from transformers import pipeline
 import logging
+from job_optimizer import JobDescriptionOptimizer
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,16 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize job optimizer
+try:
+    job_optimizer = JobDescriptionOptimizer()
+    OPTIMIZER_ENABLED = True
+    logger.info("Job optimizer initialized successfully")
+except Exception as e:
+    logger.warning(f"Job optimizer initialization failed: {e}")
+    job_optimizer = None
+    OPTIMIZER_ENABLED = False
 
 # Initialize AI text enhancement pipeline (optional)
 try:
@@ -43,7 +54,11 @@ def enhance_text(text, max_length=100):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({"status": "healthy", "ai_enabled": AI_ENABLED})
+    return jsonify({
+        "status": "healthy", 
+        "ai_enabled": AI_ENABLED,
+        "optimizer_enabled": OPTIMIZER_ENABLED
+    })
 
 @app.route('/generate', methods=['POST'])
 def generate_resume():
@@ -97,6 +112,103 @@ def preview_resume():
         return jsonify({"html": html_content})
     except Exception as e:
         logger.error(f"Error generating preview: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/analyze-job', methods=['POST'])
+def analyze_job_description():
+    """Analyze job description and extract key information"""
+    try:
+        if not OPTIMIZER_ENABLED:
+            return jsonify({"error": "Job optimizer not available"}), 503
+        
+        data = request.get_json()
+        job_description = data.get('job_description', '')
+        
+        if not job_description.strip():
+            return jsonify({"error": "Job description is required"}), 400
+        
+        # Analyze job description
+        analysis = job_optimizer.analyze_job_description(job_description)
+        
+        return jsonify({
+            "analysis": analysis,
+            "success": True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error analyzing job description: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/optimize-resume', methods=['POST'])
+def optimize_resume():
+    """Optimize resume based on job description"""
+    try:
+        if not OPTIMIZER_ENABLED:
+            return jsonify({"error": "Job optimizer not available"}), 503
+        
+        data = request.get_json()
+        resume_data = data.get('resume_data', {})
+        job_description = data.get('job_description', '')
+        
+        # Validate required fields
+        if not job_description.strip():
+            return jsonify({"error": "Job description is required"}), 400
+        
+        if not resume_data.get('name') or not resume_data.get('email'):
+            return jsonify({"error": "Resume data with name and email is required"}), 400
+        
+        # Analyze job description first
+        job_analysis = job_optimizer.analyze_job_description(job_description)
+        
+        # Generate optimization suggestions
+        optimization_result = job_optimizer.optimize_resume(resume_data, job_analysis)
+        
+        return jsonify({
+            "optimization": optimization_result,
+            "success": True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error optimizing resume: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/apply-suggestions', methods=['POST'])
+def apply_suggestions():
+    """Apply optimization suggestions to resume data"""
+    try:
+        data = request.get_json()
+        resume_data = data.get('resume_data', {})
+        suggestions = data.get('suggestions', {})
+        selected_improvements = data.get('selected_improvements', [])
+        
+        # Apply selected experience improvements
+        for improvement in selected_improvements:
+            if improvement.get('type') == 'experience' and 'index' in improvement:
+                idx = improvement['index']
+                if idx < len(resume_data.get('work_experience', [])):
+                    resume_data['work_experience'][idx]['description'] = improvement['improved']
+        
+        # Apply selected project improvements
+        for improvement in selected_improvements:
+            if improvement.get('type') == 'project' and 'index' in improvement:
+                idx = improvement['index']
+                if idx < len(resume_data.get('projects', [])):
+                    resume_data['projects'][idx]['description'] = improvement['improved']
+        
+        # Add suggested skills if requested
+        if data.get('add_suggested_skills', False):
+            current_skills = set(resume_data.get('skills', []))
+            suggested_skills = suggestions.get('skills_to_add', [])
+            new_skills = current_skills.union(set(suggested_skills))
+            resume_data['skills'] = list(new_skills)
+        
+        return jsonify({
+            "optimized_resume": resume_data,
+            "success": True
+        })
+        
+    except Exception as e:
+        logger.error(f"Error applying suggestions: {e}")
         return jsonify({"error": str(e)}), 500
 
 def create_resume_pdf(data):
